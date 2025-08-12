@@ -1,7 +1,7 @@
-import 'dart:io';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:socialmediaclone/view_pages/add_userdetails/add_user_details.dart';
+import 'package:socialmediaclone/view_pages/home_page/entry.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:socialmediaclone/view_pages/profile_page/profile_page.dart';
 
 class CreateAccountScreen extends StatefulWidget {
@@ -12,32 +12,75 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  
   final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  File? _profileImage; // to store selected image
-
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    if (image != null) {
-      setState(() {
-        _profileImage = File(image.path);
-      });
-    }
+  void _signUp() async {
+    await registerUser(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
+    );
   }
+Future<void> registerUser(String email, String password) async {
+  try {
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Account created successfully!"),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) =>  SaveUserDataForm()),
+    );
+
+  } on FirebaseAuthException catch (e) {
+    String errorMessage;
+
+    if (e.code == 'weak-password') {
+      errorMessage = "Password is too weak.";
+    } else if (e.code == 'email-already-in-use') {
+      errorMessage = "This email is already in use.";
+    } else if (e.code == 'invalid-email') {
+      errorMessage = "Invalid email address.";
+    } else {
+      errorMessage = "Something went wrong. Please try again.";
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(errorMessage),
+        backgroundColor: Colors.red,
+      ),
+    );
+
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Error: $e"),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: Text(
-            "Create account",
-            style: TextStyle(color: Colors.black, fontSize: 20),
-          ),
+        title: Text(
+          "Create account",
+          style: TextStyle(color: Colors.black, fontSize: 20),
         ),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -66,35 +109,18 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 20),
 
-                    // Profile picture upload section
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: Color(0xFFF2F2F2),
-                        backgroundImage: _profileImage != null
-                            ? FileImage(_profileImage!)
-                            : null,
-                        child: _profileImage == null
-                            ? const Icon(Icons.add_a_photo,
-                                size: 30, color: Colors.white)
-                            : null,
-                      ),
-                    ),
                     const SizedBox(height: 16),
 
-                    // Username field
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Username"),
+                        const Text("Email "),
                         const SizedBox(height: 6),
                         TextFormField(
-                          controller: _usernameController,
+                          controller: _emailController,
                           decoration: InputDecoration(
-                            hintText: 'Enter username',
+                            hintText: 'Enter Email',
                             filled: true,
                             fillColor: const Color(0xFFF2F2F2),
                             border: OutlineInputBorder(
@@ -103,14 +129,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                             ),
                           ),
                           validator: (val) => val == null || val.isEmpty
-                              ? 'Enter username'
+                              ? 'Enter Email '
                               : null,
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
 
-                    // Password field
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -136,17 +161,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Create Account button
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            print("Username: ${_usernameController.text}");
-                            print("Password: ${_passwordController.text}");
-                            print("Image: ${_profileImage?.path}");
-                          }
+                          if (_formKey.currentState!.validate())_signUp();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF106837),

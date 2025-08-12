@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:socialmediaclone/view_pages/create_account_page/create_account_page.dart';
 import 'package:socialmediaclone/view_pages/create_post.dart/create_post.dart';
 import 'package:socialmediaclone/view_pages/home_page/home_page.dart';
-import 'package:socialmediaclone/view_pages/login_page/login_page.dart';
 import 'package:socialmediaclone/view_pages/profile_page/profile_page.dart';
 
-class BottomNavExample extends StatefulWidget {
-  const BottomNavExample({super.key});
+class EntryPage extends StatefulWidget {
+  const EntryPage({super.key});
 
   @override
-  State<BottomNavExample> createState() => _BottomNavExampleState();
+  State<EntryPage> createState() => _EntryPageState();
 }
 
-class _BottomNavExampleState extends State<BottomNavExample> {
+class _EntryPageState extends State<EntryPage> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    HomePage(),
-    // CreatePost(),
-    MultipleImageUploader(),
+    AllPostsPage(),
+    CloudinaryMultiUploader(),
     ProfilePage(),
   ];
 

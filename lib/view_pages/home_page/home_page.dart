@@ -1,130 +1,100 @@
-import 'package:flutter/material.dart';
-import 'package:socialmediaclone/view_pages/profile_page/profile_page.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+
+class AllPostsPage extends StatefulWidget {
+  @override
+  _AllPostsPageState createState() => _AllPostsPageState();
+}
+
+class _AllPostsPageState extends State<AllPostsPage> {
+  List<Map<String, dynamic>> posts = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPosts();
+  }
+
+  Future<void> fetchPosts() async {
+    setState(() => isLoading = true);
+
+    // QuerySnapshot snapshot = await FirebaseFirestore.instance
+    //     .collection("users")
+    //     .get();
+    QuerySnapshot snapshot = await FirebaseFirestore.instance
+    .collection("users")
+    .get(const GetOptions(source: Source.server));
+
+
+    List<Map<String, dynamic>> loadedPosts = [];
+
+    for (var doc in snapshot.docs) {
+      var userData = doc.data() as Map<String, dynamic>;
+      var imagesCollection = await FirebaseFirestore.instance
+          .collection("users")
+          .doc(doc.id)
+          .collection("images")
+          .orderBy("timestamp", descending: true)
+          .get();
+
+      for (var imageDoc in imagesCollection.docs) {
+        var imageData = imageDoc.data() as Map<String, dynamic>;
+        loadedPosts.add({
+          "userId": doc.id,
+          "username": userData["fullname"] ?? "Unknown",
+          "imageUrl": imageData["url"],
+          "timestamp": imageData["timestamp"]
+        });
+      }
+    }
+
+    loadedPosts.sort((a, b) =>
+        (b["timestamp"] as Timestamp)
+            .compareTo(a["timestamp"] as Timestamp));
+
+    setState(() {
+      posts = loadedPosts;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: Text(
-            "Socio_Gram",
-            style: TextStyle(color: Colors.black, fontSize: 20),
-          ),
-          actions: [
-            IconButton(
-              onPressed: () {},
-              icon: Icon(
-                Icons.notifications_none,
-                size: 28,
-              ),
-              color: Colors.red,
-            ),
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => ProfilePage()));
-              },
-              icon: Icon(
-                Icons.person,
-                size: 28,
-              ),
-              color: const Color.fromARGB(255, 32, 109, 186),
-            ),
-          ]),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.amber,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Column(
+      appBar: AppBar(title: Text("All Posts")),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: fetchPosts,
+              child: ListView.builder(
+                padding: EdgeInsets.all(10),
+                itemCount: posts.length,
+                itemBuilder: (context, index) {
+                  var post = posts[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Abhishek kp",
+                        post["username"],
                         style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black),
+                            fontWeight: FontWeight.bold, fontSize: 16),
                       ),
-                      Text(
-                        "12/08/2025",
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: const Color.fromARGB(255, 96, 96, 96)),
+                      SizedBox(height: 5),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          post["imageUrl"],
+                          fit: BoxFit.cover,
+                        ),
                       ),
+                      SizedBox(height: 15),
                     ],
-                  )
-                ],
+                  );
+                },
               ),
-              const SizedBox(
-                height: 10,
-              ),
-              Container(
-                height: 1,
-                color: const Color.fromARGB(103, 120, 120, 120),
-              ),
-              Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: AssetImage("assets/images/signuppage.jpg"),
-                        fit: BoxFit.cover)),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Container(
-                height: 1,
-                color: const Color.fromARGB(103, 120, 120, 120),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                children: [
-                  Icon(
-                    Icons.favorite_border,
-                    size: 27,
-                  ),
-                  const SizedBox(
-                    width: 16,
-                  ),
-                  Icon(
-                    Icons.comment,
-                    size: 27,
-                  ),
-                  const SizedBox(
-                    width: 16,
-                  ),
-                  Icon(
-                    Icons.share,
-                    size: 27,
-                  ),
-                  const SizedBox(
-                    width: 16,
-                  ),
-                ],
-              )
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }

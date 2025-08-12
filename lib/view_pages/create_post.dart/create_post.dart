@@ -1,159 +1,172 @@
-// import 'package:flutter/material.dart';
-// import 'package:socialmediaclone/view_pages/profile_page/profile_page.dart';
-
-// class CreatePost extends StatelessWidget {
-//   const CreatePost({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//           automaticallyImplyLeading: false,
-//           title: Text(
-//             "Create Post",
-//             style: TextStyle(color: Colors.black, fontSize: 20),
-//           ),
-//           actions: [
-//             IconButton(
-//               onPressed: () {},
-//               icon: Icon(
-//                 Icons.notifications_none,
-//                 size: 28,
-//               ),
-//               color: Colors.red,
-//             ),
-//             IconButton(
-//               onPressed: () {
-//                 Navigator.of(context).push(
-//                     MaterialPageRoute(builder: (context) => ProfilePage()));
-//               },
-//               icon: Icon(
-//                 Icons.person,
-//                 size: 28,
-//               ),
-//               color: const Color.fromARGB(255, 32, 109, 186),
-//             ),
-//           ]),
-//       body: GestureDetector(
-//         onTap: (){
-//           print("create post icon pressed");
-//         },
-//         child: Container(
-//           height: MediaQuery.of(context).size.height,
-//           width: double.infinity,
-//           decoration: BoxDecoration(
-//             image: DecorationImage(
-//                 image: AssetImage("assets/images/create_post.png"),
-//                 fit: BoxFit.cover),
-//           ),
-//           child: Center(
-//             child: Text(
-//               "Tap to upload images",
-//               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
 
-class MultipleImageUploader extends StatefulWidget {
+class CloudinaryMultiUploader extends StatefulWidget {
+  const CloudinaryMultiUploader({Key? key}) : super(key: key);
+
   @override
-  _MultipleImageUploaderState createState() => _MultipleImageUploaderState();
+  _CloudinaryMultiUploaderState createState() =>
+      _CloudinaryMultiUploaderState();
 }
 
-class _MultipleImageUploaderState extends State<MultipleImageUploader> {
-  List<XFile>? _images = [];
+class _CloudinaryMultiUploaderState extends State<CloudinaryMultiUploader> {
+  final ImagePicker _picker = ImagePicker();
+  bool isLoading = false;
 
-  Future<void> _pickImages() async {
-    final ImagePicker picker = ImagePicker();
-    final List<XFile>? pickedImages = await picker.pickMultiImage();
-    if (pickedImages != null) {
-      setState(() {
-        _images = pickedImages;
-      });
+  String cloudName = "dt7qnqy5z"; // Your Cloudinary cloud name
+  String uploadPreset = "flutter_unsigned"; // Unsigned preset name
+  Future<void> _pickAndUploadImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please log in first")),
+      );
+      return;
+    }
+
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() => isLoading = true);
+
+      try {
+        String fileName = path.basename(pickedFile.path);
+
+        // Upload to Cloudinary (inside a folder named by userId)
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload"),
+        );
+
+        request.fields['upload_preset'] = uploadPreset;
+        request.fields['folder'] = "users/${user.uid}";
+        request.files.add(await http.MultipartFile.fromPath(
+          'file',
+          pickedFile.path,
+        ));
+
+        var response = await request.send();
+        var responseData = await http.Response.fromStream(response);
+        var data = json.decode(responseData.body);
+
+        if (data['secure_url'] != null) {
+          String imageUrl = data['secure_url'];
+
+          // --- CHANGE: use client-side Timestamp here (allowed inside arrays) ---
+          Map<String, dynamic> imageData = {
+            "url": imageUrl,
+            "timestamp": Timestamp.now(), // client-generated timestamp
+          };
+
+          // Store image data in Firestore (array of maps)
+          await FirebaseFirestore.instance
+              .collection("users")
+              .doc(user.uid)
+              .update({
+            "images": FieldValue.arrayUnion([imageData])
+          }).catchError((_) async {
+            // If user document doesn't exist, create it with images array
+            await FirebaseFirestore.instance
+                .collection("users")
+                .doc(user.uid)
+                .set({
+              "images": [imageData]
+            });
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Image uploaded successfully!")),
+          );
+        } else {
+          throw Exception("Upload failed: ${data['error']}");
+        }
+      } catch (e) {
+        print(" Upload error: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      } finally {
+        setState(() => isLoading = false);
+      }
     }
   }
 
-  // Future<void> _uploadImages() async {
-  //   for (var image in _images!) {
-  //     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-  //     Reference ref = FirebaseStorage.instance.ref().child('uploads/$fileName');
-  //     await ref.putFile(File(image.path));
-  //     String downloadUrl = await ref.getDownloadURL();
-
-  //     // Save URL to Firestore
-  //     await FirebaseFirestore.instance.collection('posts').add({
-  //       'image_url': downloadUrl,
-  //       'timestamp': FieldValue.serverTimestamp(),
-  //     });
-  //   }
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(content: Text('Images Uploaded!')),
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
-      
-      appBar: AppBar(title: Text("Create Post")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            SizedBox(
-                width: double.infinity,
-                        height: 48,
+      appBar: AppBar(
+        title: const Text("Create Post"),
+      ),
+      body: Column(
+        children: [
+          if (isLoading) const LinearProgressIndicator(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
               child: ElevatedButton(
-                onPressed: _pickImages,
-                  style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 209, 247, 226),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                child: Text("Select Images",style: TextStyle(color: const Color.fromARGB(255, 0, 0, 0), fontSize: 18),),
-              ),
-            ),
-            const SizedBox(height: 16,),
-            Expanded(
-              child: GridView.builder(
-                itemCount: _images?.length ?? 0,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 4,
-                  mainAxisSpacing: 4,
+                onPressed: _pickAndUploadImage,
+                child: const Text(
+                  "Upload Image",
+                  style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
-                itemBuilder: (context, index) {
-                  return Image.file(File(_images![index].path), fit: BoxFit.cover);
-                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF106837),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    )),
               ),
             ),
-          
-            SizedBox(
-                width: double.infinity,
-                      height: 48,
-              child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF106837),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: user == null
+                ? const Center(child: Text("Please login to see images"))
+                : StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection("users")
+                        .doc(user.uid)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      var data =
+                          snapshot.data!.data() as Map<String, dynamic>? ?? {};
+                      List images = data["images"] ?? [];
+                      if (images.isEmpty) {
+                        return const Center(child: Text("No images uploaded"));
+                      }
+                      return GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 5,
+                          mainAxisSpacing: 5,
                         ),
-                onPressed:(){},
-                //  _images!.isNotEmpty ? _uploadImages : null,
-                child: Text("Upload Images",style: TextStyle(color: Colors.white, fontSize: 18),),
-              ),
-            ),
-          ],
-        ),
+                        itemCount: images.length,
+                        itemBuilder: (context, index) {
+                          var imageData = images[index] as Map<String, dynamic>;
+                          return Image.network(
+                            imageData["url"],
+                            fit: BoxFit.cover,
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }
