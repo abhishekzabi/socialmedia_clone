@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:socialmediaclone/view_pages/notification_page.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -24,7 +25,38 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: Text('My Profile')),
+        appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Padding(
+          padding: const EdgeInsets.only(left: 20),
+          child: const Text(
+            'SNAP_GRAM',
+            style: TextStyle(
+                color: const Color(0xFF106837),
+                fontSize: 18,
+                fontWeight: FontWeight.bold),
+          ),
+        ),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => NotificationPage()));
+              },
+              icon: Icon(
+                Icons.notifications,
+                color: const Color(0xFF106837),
+              )),
+          IconButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+              },
+              icon: Icon(
+                Icons.logout,
+                color: const Color(0xFF106837),
+              )),
+        ],
+      ),
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         future: userDataFuture,
         builder: (context, snapshot) {

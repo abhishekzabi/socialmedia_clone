@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +5,8 @@ import 'package:path/path.dart' as path;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
+
+import 'package:socialmediaclone/view_pages/notification_page.dart';
 
 class CloudinaryMultiUploader extends StatefulWidget {
   const CloudinaryMultiUploader({Key? key}) : super(key: key);
@@ -19,8 +20,8 @@ class _CloudinaryMultiUploaderState extends State<CloudinaryMultiUploader> {
   final ImagePicker _picker = ImagePicker();
   bool isLoading = false;
 
-  String cloudName = "dt7qnqy5z"; // Your Cloudinary cloud name
-  String uploadPreset = "flutter_unsigned"; // Unsigned preset name
+  String cloudName = "dt7qnqy5z";
+  String uploadPreset = "flutter_unsigned";
   Future<void> _pickAndUploadImage() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -39,7 +40,6 @@ class _CloudinaryMultiUploaderState extends State<CloudinaryMultiUploader> {
       try {
         String fileName = path.basename(pickedFile.path);
 
-        // Upload to Cloudinary (inside a folder named by userId)
         var request = http.MultipartRequest(
           'POST',
           Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload"),
@@ -59,20 +59,17 @@ class _CloudinaryMultiUploaderState extends State<CloudinaryMultiUploader> {
         if (data['secure_url'] != null) {
           String imageUrl = data['secure_url'];
 
-          // --- CHANGE: use client-side Timestamp here (allowed inside arrays) ---
           Map<String, dynamic> imageData = {
             "url": imageUrl,
-            "timestamp": Timestamp.now(), // client-generated timestamp
+            "timestamp": Timestamp.now(),
           };
 
-          // Store image data in Firestore (array of maps)
           await FirebaseFirestore.instance
               .collection("users")
               .doc(user.uid)
               .update({
             "images": FieldValue.arrayUnion([imageData])
           }).catchError((_) async {
-            // If user document doesn't exist, create it with images array
             await FirebaseFirestore.instance
                 .collection("users")
                 .doc(user.uid)
@@ -104,7 +101,36 @@ class _CloudinaryMultiUploaderState extends State<CloudinaryMultiUploader> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Create Post"),
+        automaticallyImplyLeading: false,
+        title: Padding(
+          padding: const EdgeInsets.only(left: 20),
+          child: const Text(
+            'SNAP_GRAM',
+            style: TextStyle(
+                color: const Color(0xFF106837),
+                fontSize: 18,
+                fontWeight: FontWeight.bold),
+          ),
+        ),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => NotificationPage()));
+              },
+              icon: Icon(
+                Icons.notifications,
+                color: const Color(0xFF106837),
+              )),
+          IconButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+              },
+              icon: Icon(
+                Icons.logout,
+                color: const Color(0xFF106837),
+              )),
+        ],
       ),
       body: Column(
         children: [

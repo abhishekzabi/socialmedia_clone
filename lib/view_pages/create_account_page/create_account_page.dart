@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:socialmediaclone/view_pages/add_userdetails/add_user_details.dart';
-import 'package:socialmediaclone/view_pages/home_page/entry.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:socialmediaclone/view_pages/profile_page/profile_page.dart';
 
 class CreateAccountScreen extends StatefulWidget {
   const CreateAccountScreen({super.key});
@@ -181,6 +179,27 @@ Future<void> registerUser(String email, String password) async {
                       ),
                     ),
                     const SizedBox(height: 20),
+                      Center(
+                      child: Text.rich(
+                        TextSpan(
+                          text:
+                              'By creating or logging into an account you are agreeing\nwith our ',
+                          children: [
+                            TextSpan(
+                              text: 'Terms and Conditions',
+                              style: TextStyle(color: Colors.blue.shade700),
+                            ),
+                            const TextSpan(text: ' and '),
+                            TextSpan(
+                              text: 'Privacy Policy',
+                              style: TextStyle(color: Colors.blue.shade700),
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
                   ],
                 ),
               ),

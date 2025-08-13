@@ -14,7 +14,7 @@ class _EntryPageState extends State<EntryPage> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    AllPostsPage(),
+    PostsFeedPage(),
     CloudinaryMultiUploader(),
     ProfilePage(),
   ];

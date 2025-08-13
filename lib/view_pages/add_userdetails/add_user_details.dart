@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -83,12 +82,10 @@ class _SaveUserDataFormState extends State<SaveUserDataForm> {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User data saved successfully!')
-        
-        ),
-    
+        SnackBar(content: Text('User data saved successfully!')),
       );
-      Navigator.of(context).push(MaterialPageRoute(builder: (context)=>EntryPage()));
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => EntryPage()));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to save data: $e')),
@@ -125,53 +122,63 @@ class _SaveUserDataFormState extends State<SaveUserDataForm> {
                       validator: (val) =>
                           val == null || val.isEmpty ? 'Enter full name' : null,
                     ),
-                                        const SizedBox(height: 10,),
-
+                    const SizedBox(
+                      height: 10,
+                    ),
                     TextFormField(
                       initialValue: user?.email ?? '',
                       readOnly: true,
                       decoration: _inputDecoration('Email'),
                     ),
-                                        const SizedBox(height: 10,),
-
+                    const SizedBox(
+                      height: 10,
+                    ),
                     TextFormField(
                       controller: _ageController,
                       decoration: _inputDecoration('Age'),
                       keyboardType: TextInputType.number,
                       validator: (val) {
                         if (val == null || val.isEmpty) return 'Enter age';
-                        if (int.tryParse(val) == null) return 'Enter valid number';
+                        if (int.tryParse(val) == null)
+                          return 'Enter valid number';
                         return null;
                       },
                     ),
-                                        const SizedBox(height: 10,),
-
+                    const SizedBox(
+                      height: 10,
+                    ),
                     TextFormField(
                       controller: _addressController,
                       decoration: _inputDecoration('Address'),
                       validator: (val) =>
                           val == null || val.isEmpty ? 'Enter address' : null,
                     ),
-                    const SizedBox(height: 10,),
+                    const SizedBox(
+                      height: 10,
+                    ),
                     TextFormField(
                       controller: _phoneController,
                       decoration: _inputDecoration('Phone Number'),
                       keyboardType: TextInputType.phone,
-                      validator: (val) =>
-                          val == null || val.isEmpty ? 'Enter phone number' : null,
+                      validator: (val) => val == null || val.isEmpty
+                          ? 'Enter phone number'
+                          : null,
                     ),
                     SizedBox(height: 20),
                     SizedBox(
-                        width: double.infinity,
+                      width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
                         onPressed: saveData,
-                           style: ElevatedButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF106837),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
                             )),
-                        child: Text('Save Data', style: TextStyle(color: Colors.white, fontSize: 18),),
+                        child: Text(
+                          'Save Data',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
                       ),
                     ),
                   ],

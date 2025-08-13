@@ -7,6 +7,7 @@ import 'package:socialmediaclone/view_pages/auth_gate/auth_gate.dart';
 import 'package:socialmediaclone/view_pages/home_page/entry.dart';
 import 'package:socialmediaclone/view_pages/login_page/login_page.dart';
 import 'package:socialmediaclone/view_pages/profile_page/profile_page.dart';
+import 'package:socialmediaclone/view_pages/splash_screen/splash_screen.dart';
 // web       1:261565164474:web:945537aef657e9cef8cb83
 // android   1:261565164474:android:6df91bc09570d561f8cb83
 // ios       1:261565164474:ios:41114fc7e7e31530f8cb83
@@ -22,7 +23,7 @@ void main() async{
     options: DefaultFirebaseOptions.currentPlatform
   );
   await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.playIntegrity, // or safetyNet if older devices
+    androidProvider: AndroidProvider.playIntegrity,
     appleProvider: AppleProvider.deviceCheck,
   );
   runApp(const MyApp());
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home:  AuthGate(),
+      home:  SplashScreen(),
             // home:  BottomNavExample(),
 
     );
