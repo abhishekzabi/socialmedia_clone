@@ -24,5 +24,6 @@ Share your moments instantly, and let your friends be a part of your journey.
 - [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
 For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
+[online documentation](https://docs.flutter.dev/), which off<img width="2551" height="3579" alt="SNAPGRAM-01" src="https://github.com/user-attachments/assets/68511e4e-e2a9-41f8-9aaa-645e17fb0eb0" />
+ers tutorials,
 samples, guidance on mobile development, and a full API reference.
