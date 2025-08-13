@@ -274,8 +274,7 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
                 color: const Color(0xFF106837),
               )),
           IconButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
+              onPressed: ()  {
               },
               icon: Icon(
                 Icons.logout,

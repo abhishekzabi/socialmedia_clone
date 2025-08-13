@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:socialmediaclone/view_pages/login_page/login_page.dart';
 import 'package:socialmediaclone/view_pages/notification_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -48,8 +49,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: const Color(0xFF106837),
               )),
           IconButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
+              onPressed: ()  {
               },
               icon: Icon(
                 Icons.logout,
@@ -352,6 +352,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: ElevatedButton(
                     onPressed: () async {
                       await FirebaseAuth.instance.signOut();
+                       Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(builder: (context) => LoginScreen()),
+    (Route<dynamic> route) => false,
+  );
+                      
                     },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF106837),

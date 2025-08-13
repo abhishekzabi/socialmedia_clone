@@ -30,8 +30,7 @@ class NotificationPage extends StatelessWidget {
                 color: const Color(0xFF106837),
               )),
           IconButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
+              onPressed: ()  {
               },
               icon: Icon(
                 Icons.logout,
