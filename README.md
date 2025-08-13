@@ -2,9 +2,8 @@
 
 socialmediaclone
 
-## Getting Started
+## CREATE, SHARE, AND CONNECT
 
-CREATE, SHARE, AND CONNECT
 Effortlessly log in, share your favorite moments, and stay connected with friends and the community.
 Post images, like and comment on posts, and explore what others are sharing — all within one simple, powerful app.
 
