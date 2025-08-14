@@ -48,6 +48,31 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
 
           for (var img in images) {
             if (img is Map<String, dynamic>) {
+              //  Privacy filtering
+              final String privacy = img['privacy'] ?? 'public';
+              final List allowedUsers = List.from(img['allowedUsers'] ?? []);
+
+              bool canSeePost = false;
+              if (privacy == 'public') {
+                canSeePost = true;
+              } else if (privacy == 'custom') {
+                canSeePost = (userId == currentUserId) ||
+                    allowedUsers.contains(currentUserId);
+              } else if (privacy == 'private') {
+                canSeePost = (userId == currentUserId);
+              }
+
+              // if (privacy == 'public') {
+              //   canSeePost = true;
+              // } else if (privacy == 'custom') {
+              //   canSeePost = allowedUsers.contains(currentUserId);
+              // } else if (privacy == 'private') {
+              //   canSeePost = (userId == currentUserId);
+              // }
+
+              if (!canSeePost) continue; // skip post if not allowed
+
+              // Handle comments list
               List<Map<String, dynamic>> comments =
                   List<Map<String, dynamic>>.from(img['comments'] ?? []);
 
@@ -76,6 +101,7 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
         }
       }
 
+      // Fetch commenter names
       if (commenterIds.isNotEmpty) {
         List<String> idsList = commenterIds.toList();
         for (var i = 0; i < idsList.length; i += 10) {
@@ -93,6 +119,7 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
         }
       }
 
+      // Sort posts
       tempPosts.sort((a, b) {
         Timestamp t1 = a['timestamp'] ?? Timestamp.now();
         Timestamp t2 = b['timestamp'] ?? Timestamp.now();
@@ -108,6 +135,86 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
       setState(() => isLoading = false);
     }
   }
+
+  // Future<void> fetchPosts() async {
+  //   try {
+  //     QuerySnapshot usersSnapshot =
+  //         await FirebaseFirestore.instance.collection('users').get();
+
+  //     List<Map<String, dynamic>> tempPosts = [];
+  //     Set<String> commenterIds = {};
+
+  //     for (var userDoc in usersSnapshot.docs) {
+  //       final data = userDoc.data() as Map<String, dynamic>;
+  //       final userId = userDoc.id;
+  //       final fullName = data['fullname'] ?? 'Unknown';
+  //       final profileImage = data['profileImage'] ?? '';
+
+  //       if (data.containsKey('images') && data['images'] is List) {
+  //         List<dynamic> images = data['images'];
+
+  //         for (var img in images) {
+  //           if (img is Map<String, dynamic>) {
+  //             List<Map<String, dynamic>> comments =
+  //                 List<Map<String, dynamic>>.from(img['comments'] ?? []);
+
+  //             for (var comment in comments) {
+  //               final cUserId = comment['userId'];
+  //               if (cUserId != null) {
+  //                 commenterIds.add(cUserId);
+  //               }
+  //             }
+
+  //             String postId = img['url'];
+  //             commentControllers[postId] ??= TextEditingController();
+
+  //             tempPosts.add({
+  //               'postId': postId,
+  //               'userId': userId,
+  //               'userName': fullName,
+  //               'userProfile': profileImage,
+  //               'url': img['url'],
+  //               'timestamp': img['timestamp'],
+  //               'likes': List<String>.from(img['likes'] ?? []),
+  //               'comments': comments,
+  //             });
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     if (commenterIds.isNotEmpty) {
+  //       List<String> idsList = commenterIds.toList();
+  //       for (var i = 0; i < idsList.length; i += 10) {
+  //         final batchIds = idsList.sublist(
+  //             i, i + 10 > idsList.length ? idsList.length : i + 10);
+  //         var usersQuery = await FirebaseFirestore.instance
+  //             .collection('users')
+  //             .where(FieldPath.documentId, whereIn: batchIds)
+  //             .get();
+
+  //         for (var userDoc in usersQuery.docs) {
+  //           final data = userDoc.data();
+  //           userIdToFullname[userDoc.id] = data['fullname'] ?? userDoc.id;
+  //         }
+  //       }
+  //     }
+
+  //     tempPosts.sort((a, b) {
+  //       Timestamp t1 = a['timestamp'] ?? Timestamp.now();
+  //       Timestamp t2 = b['timestamp'] ?? Timestamp.now();
+  //       return t2.compareTo(t1);
+  //     });
+
+  //     setState(() {
+  //       posts = tempPosts;
+  //       isLoading = false;
+  //     });
+  //   } catch (e) {
+  //     print('Error fetching posts: $e');
+  //     setState(() => isLoading = false);
+  //   }
+  // }
 
   Future<void> toggleLike(int index) async {
     final post = posts[index];
@@ -274,8 +381,7 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
                 color: const Color(0xFF106837),
               )),
           IconButton(
-              onPressed: ()  {
-              },
+              onPressed: () {},
               icon: Icon(
                 Icons.logout,
                 color: const Color(0xFF106837),
@@ -302,21 +408,27 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
                       children: [
                         ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: const Color.fromARGB(255, 150, 237, 189),
+                            backgroundColor:
+                                const Color.fromARGB(255, 150, 237, 189),
                             child: Text(post['userName'][0].toUpperCase()),
                           ),
-                          title: Text(post['userName'],style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold),),
+                          title: Text(
+                            post['userName'],
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                           subtitle: Text(formatTimestamp(post['timestamp'])),
                         ),
-                        Container(height: 1,
-                        color:const Color(0xFF106837)),
+                        Container(height: 1, color: const Color(0xFF106837)),
                         Image.network(
                           post['url'],
                           width: double.infinity,
                           fit: BoxFit.cover,
                         ),
-                          Container(height: 1,
-                        color: const Color.fromARGB(59, 0, 0, 0),),
+                        Container(
+                          height: 1,
+                          color: const Color.fromARGB(59, 0, 0, 0),
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                               vertical: 8, horizontal: 12),
@@ -339,7 +451,6 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
                             ],
                           ),
                         ),
-                        
                         if ((post['comments'] as List).isNotEmpty)
                           Container(
                             height: 100,
@@ -372,7 +483,11 @@ class _PostsFeedPageState extends State<PostsFeedPage> {
                                 ),
                               ),
                               IconButton(
-                                icon: Icon(Icons.send,color: const Color(0xFF106837),size: 30,),
+                                icon: Icon(
+                                  Icons.send,
+                                  color: const Color(0xFF106837),
+                                  size: 30,
+                                ),
                                 onPressed: () => addComment(index),
                               ),
                             ],

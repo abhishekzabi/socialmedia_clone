@@ -8,14 +8,7 @@ import 'package:socialmediaclone/view_pages/home_page/entry.dart';
 import 'package:socialmediaclone/view_pages/login_page/login_page.dart';
 import 'package:socialmediaclone/view_pages/profile_page/profile_page.dart';
 import 'package:socialmediaclone/view_pages/splash_screen/splash_screen.dart';
-// web       1:261565164474:web:945537aef657e9cef8cb83
-// android   1:261565164474:android:6df91bc09570d561f8cb83
-// ios       1:261565164474:ios:41114fc7e7e31530f8cb83
-// macos     1:261565164474:ios:41114fc7e7e31530f8cb83
-// windows   1:261565164474:web:892a63360070e74bf8cb83
-//DVMyi21mhbu0hRLn3JT2Qi6NBNo             SECRET
-//656674856126934                          API
-var cloudinary=Cloudinary.fromStringUrl('cloudinary://656674856126934:DVMyi21mhbu0hRLn3JT2Qi6NBNo@dt7qnqy5z');
+
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
